@@ -1,97 +1,104 @@
 import streamlit as st
-from pint import UnitRegistry
 
-# Initialize UnitRegistry
-ureg = UnitRegistry()
+def convert_length(value, from_unit, to_unit):
+    length_units = {
+        'meters': 1,
+        'kilometers': 1000,
+        'centimeters': 0.01,
+        'millimeters': 0.001,
+        'miles': 1609.34,
+        'yards': 0.9144,
+        'feet': 0.3048,
+        'inches': 0.0254
+    }
+    return value * length_units[from_unit] / length_units[to_unit]
 
-# Define unit categories and units
-unit_categories = {
-    "Length": {
-        "units": ["meter", "kilometer", "mile", "yard", "foot", "inch", "centimeter", "millimeter"],
-        "formula": "multiply the length value by {factor}"
-    },
-    "Weight": {
-        "units": ["gram", "kilogram", "pound", "ounce"],
-        "formula": "multiply the weight value by {factor}"
-    },
-    "Temperature": {
-        "units": ["celsius", "fahrenheit", "kelvin"],
-        "formula": "temperature conversion uses a formula"
-    },
-    "Time": {
-        "units": ["second", "minute", "hour", "day"],
-        "formula": "multiply the time value by {factor}"
-    },
-    "Speed": {
-        "units": ["meter/second", "kilometer/hour", "mile/hour"],
-        "formula": "multiply the speed value by {factor}"
-    },
-}
+def convert_weight(value, from_unit, to_unit):
+    weight_units = {
+        'kilograms': 1,
+        'grams': 0.001,
+        'milligrams': 0.000001,
+        'pounds': 0.453592,
+        'ounces': 0.0283495
+    }
+    return value * weight_units[from_unit] / weight_units[to_unit]
 
-# Streamlit UI
-st.title("🌍 Google-Style Unit Converter")
+def convert_temperature(value, from_unit, to_unit):
+    if from_unit == 'celsius':
+        if to_unit == 'fahrenheit':
+            return (value * 9/5) + 32
+        elif to_unit == 'kelvin':
+            return value + 273.15
+    elif from_unit == 'fahrenheit':
+        if to_unit == 'celsius':
+            return (value - 32) * 5/9
+        elif to_unit == 'kelvin':
+            return (value - 32) * 5/9 + 273.15
+    elif from_unit == 'kelvin':
+        if to_unit == 'celsius':
+            return value - 273.15
+        elif to_unit == 'fahrenheit':
+            return (value - 273.15) * 9/5 + 32
+    return value
 
-# Select category
-category = st.selectbox("Select a category:", list(unit_categories.keys()))
+def convert_volume(value, from_unit, to_unit):
+    volume_units = {
+        'liters': 1,
+        'milliliters': 0.001,
+        'cubic meters': 1000,
+        'gallons': 3.78541,
+        'quarts': 0.946353,
+        'pints': 0.473176,
+        'cups': 0.24
+    }
+    return value * volume_units[from_unit] / volume_units[to_unit]
 
-# Select from & to units
-units = unit_categories[category]["units"]
-from_unit = st.selectbox("Convert from:", units)
-to_unit = st.selectbox("Convert to:", units)
+def main():
+    st.title("Unit Converter")
+    
+    # Conversion type selection
+    conversion_type = st.selectbox(
+        "Select conversion type",
+        ["Length", "Weight", "Temperature", "Volume"]
+    )
+    
+    # Input value
+    value = st.number_input("Enter value to convert", min_value=0.0, value=1.0)
+    
+    # Unit selection based on conversion type
+    if conversion_type == "Length":
+        units = ['meters', 'kilometers', 'centimeters', 'millimeters', 
+                'miles', 'yards', 'feet', 'inches']
+        from_unit = st.selectbox("From unit", units)
+        to_unit = st.selectbox("To unit", units)
+        if st.button("Convert"):
+            result = convert_length(value, from_unit, to_unit)
+            st.success(f"{value} {from_unit} = {result:.4f} {to_unit}")
+            
+    elif conversion_type == "Weight":
+        units = ['kilograms', 'grams', 'milligrams', 'pounds', 'ounces']
+        from_unit = st.selectbox("From unit", units)
+        to_unit = st.selectbox("To unit", units)
+        if st.button("Convert"):
+            result = convert_weight(value, from_unit, to_unit)
+            st.success(f"{value} {from_unit} = {result:.4f} {to_unit}")
+            
+    elif conversion_type == "Temperature":
+        units = ['celsius', 'fahrenheit', 'kelvin']
+        from_unit = st.selectbox("From unit", units)
+        to_unit = st.selectbox("To unit", units)
+        if st.button("Convert"):
+            result = convert_temperature(value, from_unit, to_unit)
+            st.success(f"{value} {from_unit} = {result:.4f} {to_unit}")
+            
+    elif conversion_type == "Volume":
+        units = ['liters', 'milliliters', 'cubic meters', 'gallons', 
+                'quarts', 'pints', 'cups']
+        from_unit = st.selectbox("From unit", units)
+        to_unit = st.selectbox("To unit", units)
+        if st.button("Convert"):
+            result = convert_volume(value, from_unit, to_unit)
+            st.success(f"{value} {from_unit} = {result:.4f} {to_unit}")
 
-# User input
-value = st.number_input("Enter value:", min_value=0.0, format="%.4f")
-
-# Perform conversion
-if st.button("Convert"):
-    try:
-        # Handle temperature separately
-        if category == "Temperature":
-            if from_unit == "celsius" and to_unit == "fahrenheit":
-                result = (value * 9/5) + 32
-                formula = "C × 9/5 + 32"
-            elif from_unit == "fahrenheit" and to_unit == "celsius":
-                result = (value - 32) * 5/9
-                formula = "(F - 32) × 5/9"
-            elif from_unit == "celsius" and to_unit == "kelvin":
-                result = value + 273.15
-                formula = "C + 273.15"
-            elif from_unit == "kelvin" and to_unit == "celsius":
-                result = value - 273.15
-                formula = "K - 273.15"
-            elif from_unit == "fahrenheit" and to_unit == "kelvin":
-                result = (value - 32) * 5/9 + 273.15
-                formula = "(F - 32) × 5/9 + 273.15"
-            elif from_unit == "kelvin" and to_unit == "fahrenheit":
-                result = (value - 273.15) * 9/5 + 32
-                formula = "(K - 273.15) × 9/5 + 32"
-            else:
-                result = value
-                formula = "Same unit"
-
-        else:
-            # Perform general conversion using Pint
-            converted = (value * ureg(from_unit)).to(to_unit)
-            result = converted.magnitude
-            factor = converted.magnitude / value if value != 0 else 1
-            formula = unit_categories[category]["formula"].format(factor=round(factor, 4))
-
-        # Display Result
-        st.markdown(f"""
-            <div style="border:1px solid #ddd; padding:10px; border-radius:5px; text-align:center; font-size:24px;">
-                <b>{value} {from_unit}</b> = <b>{result:.4f} {to_unit}</b>
-            </div>
-        """, unsafe_allow_html=True)
-
-        # Show formula
-        st.markdown(f"""<div style="background:#f7f7f7; padding:5px; border-radius:5px; color:#444;">
-            <b style="background:#FFCC00; padding:3px 5px; border-radius:3px;">Formula</b>
-            <span style="font-size:16px;"> {formula}</span>
-        </div>""", unsafe_allow_html=True)
-
-    except Exception as e:
-        st.error(f"⚠️ Error: {e}")
-
-# Footer
-st.markdown("---")
-st.caption("Built with ❤️ using Streamlit & Pint by [Sadiq Khan](https://github.com/sadiqkhan7777)")
+if __name__ == "__main__":
+    main()
